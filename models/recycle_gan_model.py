@@ -10,6 +10,8 @@ from .base_model import BaseModel
 from . import networks
 import sys
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class RecycleGANModel(BaseModel):
   def name(self):
@@ -22,13 +24,13 @@ class RecycleGANModel(BaseModel):
 
     nb = opt.batchSize
     size = opt.fineSize
-    self.input_A0 = self.Tensor(nb, opt.input_nc, size, size)
-    self.input_A1 = self.Tensor(nb, opt.input_nc, size, size)
-    self.input_A2 = self.Tensor(nb, opt.input_nc, size, size)
+    self.input_A0 = self.Tensor(nb, opt.input_nc, size, size).to(DEVICE)
+    self.input_A1 = self.Tensor(nb, opt.input_nc, size, size).to(DEVICE)
+    self.input_A2 = self.Tensor(nb, opt.input_nc, size, size).to(DEVICE)
 
-    self.input_B0 = self.Tensor(nb, opt.output_nc, size, size)
-    self.input_B1 = self.Tensor(nb, opt.output_nc, size, size)
-    self.input_B2 = self.Tensor(nb, opt.output_nc, size, size)
+    self.input_B0 = self.Tensor(nb, opt.output_nc, size, size).to(DEVICE)
+    self.input_B1 = self.Tensor(nb, opt.output_nc, size, size).to(DEVICE)
+    self.input_B2 = self.Tensor(nb, opt.output_nc, size, size).to(DEVICE)
 
     # load/define networks
     # The naming conversion is different from those used in the paper
@@ -109,18 +111,17 @@ class RecycleGANModel(BaseModel):
 
   def set_input(self, input):
     AtoB = self.opt.which_direction == 'AtoB'
-    input_A0 = input['A0']
-    input_A1 = input['A1']
-    input_A2 = input['A2']
+    input_A0 = input['A0'].to(DEVICE)
+    input_A1 = input['A1'].to(DEVICE)
+    input_A2 = input['A2'].to(DEVICE)
 
-    input_B0 = input['B0']
-    input_B1 = input['B1']
-    input_B2 = input['B2']
+    input_B0 = input['B0'].to(DEVICE)
+    input_B1 = input['B1'].to(DEVICE)
+    input_B2 = input['B2'].to(DEVICE)
 
     self.input_A0.resize_(input_A0.size()).copy_(input_A0)
     self.input_A1.resize_(input_A1.size()).copy_(input_A1)
     self.input_A2.resize_(input_A2.size()).copy_(input_A2)
-
     self.input_B0.resize_(input_B0.size()).copy_(input_B0)
     self.input_B1.resize_(input_B1.size()).copy_(input_B1)
     self.input_B2.resize_(input_B2.size()).copy_(input_B2)
@@ -145,6 +146,7 @@ class RecycleGANModel(BaseModel):
     # fake_B2 = self.netP_B(torch.cat((fake_B0, fake_B1),1))
     if self.which_model_netP == 'prediction':
       fake_B2 = self.netP_B(fake_B0, fake_B1)
+      
     else:
       fake_B2 = self.netP_B(torch.cat((fake_B0, fake_B1), 1))
 
@@ -210,7 +212,7 @@ class RecycleGANModel(BaseModel):
     pred_B = self.fake_B_pool.query(self.pred_B2)
     loss_D_A3 = self.backward_D_basic(self.netD_A, self.real_B2, pred_B)
 
-    self.loss_D_A = loss_D_A0.data[0] + loss_D_A1.data[0] + loss_D_A2.data[0] + loss_D_A3.data[0]
+    self.loss_D_A = loss_D_A0.item() + loss_D_A1.item() + loss_D_A2.item() + loss_D_A3.item()
 
   def backward_D_B(self):
     fake_A0 = self.fake_A_pool.query(self.fake_A0)
@@ -225,7 +227,7 @@ class RecycleGANModel(BaseModel):
     pred_A = self.fake_A_pool.query(self.pred_A2)
     loss_D_B3 = self.backward_D_basic(self.netD_B, self.real_A2, pred_A)
 
-    self.loss_D_B = loss_D_B0.data[0] + loss_D_B1.data[0] + loss_D_B2.data[0] + loss_D_B3.data[0]
+    self.loss_D_B = loss_D_B0.item() + loss_D_B1.item() + loss_D_B2.item() + loss_D_B3.item()
 
   def backward_G(self):
     lambda_idt = self.opt.identity
@@ -330,16 +332,16 @@ class RecycleGANModel(BaseModel):
     self.rec_A = rec_A.data
     self.rec_B = rec_B.data
 
-    self.loss_G_A = loss_G_A0.data[0] + loss_G_A1.data[0] + loss_G_A2.data[0]
-    self.loss_G_B = loss_G_B0.data[0] + loss_G_B1.data[0] + loss_G_B2.data[0]
-    self.loss_cycle_A = loss_cycle_A.data[0]
-    self.loss_cycle_B = loss_cycle_B.data[0]
-    self.loss_pred_A = loss_pred_A.data[0]
-    self.loss_pred_B = loss_pred_B.data[0]
+    self.loss_G_A = loss_G_A0.item() + loss_G_A1.item() + loss_G_A2.item()
+    self.loss_G_B = loss_G_B0.item() + loss_G_B1.item() + loss_G_B2.item()
+    self.loss_cycle_A = loss_cycle_A.item()
+    self.loss_cycle_B = loss_cycle_B.item()
+    self.loss_pred_A = loss_pred_A.item()
+    self.loss_pred_B = loss_pred_B.item()
 
     if self.adversarial_loss_p:
-      self.loss_pred_A_adversarial = loss_pred_A_adversarial.data[0]
-      self.loss_pred_B_adversarial = loss_pred_B_adversarial.data[0]
+      self.loss_pred_A_adversarial = loss_pred_A_adversarial.item()
+      self.loss_pred_B_adversarial = loss_pred_B_adversarial.item()
 
   def optimize_parameters(self):
     # forward

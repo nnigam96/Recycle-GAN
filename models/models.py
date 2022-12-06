@@ -1,6 +1,11 @@
+import torch
+
 
 def create_model(opt):
     model = None
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
     print(opt.model)
     if opt.model == 'cycle_gan':
         assert(opt.dataset_mode == 'unaligned')

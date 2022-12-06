@@ -9,6 +9,8 @@ import numpy as np
 # Functions
 ###############################################################################
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 def weights_init_normal(m):
     classname = m.__class__.__name__
@@ -101,11 +103,11 @@ def get_scheduler(optimizer, opt):
 
 def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, init_type='normal', gpu_ids=[]):
     netG = None
-    use_gpu = len(gpu_ids) > 0
+    use_gpu = torch.cuda.is_available()
     norm_layer = get_norm_layer(norm_type=norm)
 
-    if use_gpu:
-        assert(torch.cuda.is_available())
+    #if use_gpu:
+        #assert(torch.cuda.is_available())
 
     if which_model_netG == 'resnet_9blocks':
         netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, gpu_ids=gpu_ids)
@@ -119,8 +121,8 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
         netG = PredictionNViews(input_nc, output_nc, 6, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
-    if len(gpu_ids) > 0:
-        netG.cuda(gpu_ids[0])
+    if torch.cuda.is_available():
+        netG.to(DEVICE)
     init_weights(netG, init_type=init_type)
     return netG
 
@@ -128,11 +130,11 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
 def define_D(input_nc, ndf, which_model_netD,
              n_layers_D=3, norm='batch', use_sigmoid=False, init_type='normal', gpu_ids=[]):
     netD = None
-    use_gpu = len(gpu_ids) > 0
+    use_gpu = torch.cuda.is_available()
     norm_layer = get_norm_layer(norm_type=norm)
 
-    if use_gpu:
-        assert(torch.cuda.is_available())
+    # if use_gpu:
+    #     assert(torch.cuda.is_available())
     if which_model_netD == 'basic':
         netD = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
     elif which_model_netD == 'n_layers':
@@ -142,8 +144,8 @@ def define_D(input_nc, ndf, which_model_netD,
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' %
                                   which_model_netD)
-    if use_gpu:
-        netD.cuda(gpu_ids[0])
+    if torch.cuda.is_available():
+        netD.to(DEVICE)
     init_weights(netD, init_type=init_type)
     return netD
 
