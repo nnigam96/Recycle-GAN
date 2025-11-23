@@ -1,6 +1,16 @@
 # Recycle-GAN :Unsupervised Video Retargeting 
 
-This repository provides the code for our work on [unsupervised video retargeting](http://www.cs.cmu.edu/~aayushb/Recycle-GAN/). 
+**Note**: This repository is a fork of the original Recycle-GAN implementation with custom modifications for experimental improvements.
+
+This repository provides the code for our work on [unsupervised video retargeting](http://www.cs.cmu.edu/~aayushb/Recycle-GAN/).
+
+## Custom Modifications
+
+This fork includes the following enhancements:
+
+- **CUDA Device Error Fixes**: Corrected CUDA device assignment and memory management issues for improved GPU compatibility
+- **Experimental Extensions**: Added new files and modifications for custom experiments and use cases
+- **Stability Improvements**: Enhanced error handling and device management for more robust training 
 
 ```make
 @inproceedings{Recycle-GAN,
